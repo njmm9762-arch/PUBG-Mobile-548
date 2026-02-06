@@ -15,8 +15,8 @@ video{width:100%;height:100%;object-fit:contain;display:block;}
 .top-bar span{color:#ff0050;}
 .side-actions{position:absolute;right:10px;bottom:120px;display:flex;flex-direction:column;gap:20px;align-items:center;}
 .side-actions img{width:45px;height:45px;border-radius:50%;border:2px solid #fff;cursor:pointer;}
-.side-actions .action{font-size:26px;text-align:center;cursor:pointer;}
-.side-actions .action small{font-size:14px;display:block;text-align:center;margin-top:2px;}
+.side-actions .action{font-size:26px;text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;}
+.side-actions .action small{font-size:14px;margin-top:5px;}
 .bottom-info{position:absolute;bottom:20px;left:10px;}
 .bottom-info .username{font-size:26px;font-weight:900;}
 .bottom-info .desc{font-size:16px;opacity:0.9;}
@@ -41,7 +41,7 @@ video{width:100%;height:100%;object-fit:contain;display:block;}
 </div>
 
 <div id="app">
-  <div class="top-bar">Tik <span>NEGM</span></div>
+  <div class="top-bar">TIK <span>NEGM</span></div>
   <video id="videoPlayer" autoplay playsinline muted></video>
   <div id="heart">❤️</div>
 
@@ -59,7 +59,7 @@ video{width:100%;height:100%;object-fit:contain;display:block;}
   </div>
 
   <div class="bottom-info">
-    <div class="username" id="username">★ Tik NEGM ★</div>
+    <div class="username" id="username">★ TIK NEGM ★</div>
     <div class="desc" id="videoDesc">فيديو جميل</div>
     <div class="follow">متابعة · 2 مليار</div>
   </div>
@@ -68,7 +68,7 @@ video{width:100%;height:100%;object-fit:contain;display:block;}
 <div id="profile">
   <div class="profile-header">
     <img id="profileHeaderPic" src="">
-    <h2 id="profileName">Tik NEGM</h2>
+    <h2 id="profileName">TIK NEGM</h2>
     <span id="profileFollowers">2 مليار متابع</span>
   </div>
   <div class="profile-videos" id="profileVideos"></div>
@@ -117,8 +117,7 @@ function loadVideo(){
   shareCount.innerText = v.shares;
   videoDesc.innerText = v.desc;
   liked = false;
-  likeBtn.innerText = "❤️ " + v.likes;
-  shareCount.innerText = v.shares;
+  likeBtn.innerHTML = "❤️<br><small>" + v.likes + "</small>";
   videoPlayer.play().catch(()=>{});
 }
 
@@ -136,7 +135,7 @@ function prevVideo(){ index = (index - 1 + videos.length) % videos.length; loadV
 // دبل تاب + قلب متحرك
 videoPlayer.addEventListener("dblclick", e => {
   liked = true;
-  likeBtn.innerText = "❤️ " + videos[index].likes;
+  likeBtn.innerHTML = "❤️<br><small>" + videos[index].likes + "</small>";
   heart.style.left = e.clientX + "px";
   heart.style.top = e.clientY + "px";
   heart.style.opacity = 1;
@@ -155,7 +154,7 @@ shareBtn.onclick = ()=>{shareOptions.style.display = shareOptions.style.display=
 downloadBtn.onclick = ()=>{
   const a = document.createElement("a");
   a.href = videoPlayer.src;
-  a.download = "tiknegm.mp4";
+  a.download = "TIKNEGM.mp4";
   a.click();
 };
 copyBtn.onclick = ()=>{
