@@ -29,6 +29,7 @@ video{width:100%;height:100%;object-fit:contain;display:block;}
 .profile-header span{opacity:0.7;display:block;}
 .profile-videos{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:20px;}
 .profile-videos video{width:100%;height:200px;object-fit:cover;cursor:pointer;}
+.profile-videos .views{position:absolute;bottom:5px;left:5px;color:#fff;font-size:14px;font-weight:bold;}
 .follow{background:#ff0050;padding:6px 14px;border-radius:6px;display:inline-block;margin-top:10px;cursor:pointer;}
 #heart{position:absolute;font-size:80px;color:red;opacity:0;transform:translate(-50%,-50%);pointer-events:none;transition:opacity 0.4s;}
 </style>
@@ -61,7 +62,7 @@ video{width:100%;height:100%;object-fit:contain;display:block;}
   <div class="bottom-info">
     <div class="username" id="username">★ TIK NEGM ★</div>
     <div class="desc" id="videoDesc">فيديو جميل</div>
-    <div id="profileStats">متابعين: 2 مليار · مشاركات: 150K</div>
+    <div id="profileStats">متابعين: 2B · مشاركات: 150K</div>
     <div class="follow">متابعة</div>
   </div>
 </div>
@@ -70,7 +71,7 @@ video{width:100%;height:100%;object-fit:contain;display:block;}
   <div class="profile-header">
     <img id="profileHeaderPic" src="">
     <h2 id="profileName">TIK NEGM</h2>
-    <span id="profileFollowers">2 مليار متابع</span>
+    <span id="profileFollowers">2B متابع</span>
     <span id="profileShares">150K مشاركة</span>
   </div>
   <div class="profile-videos" id="profileVideos"></div>
@@ -101,6 +102,14 @@ const profileFollowers = document.getElementById("profileFollowers");
 const profileShares = document.getElementById("profileShares");
 const profileHeaderPic = document.getElementById("profileHeaderPic");
 
+// تحويل الرقم لاختصار
+function formatNumber(num){
+  if(num >= 1e9) return (num/1e9).toFixed(1).replace(/\.0$/,'') + "B";
+  if(num >= 1e6) return (num/1e6).toFixed(1).replace(/\.0$/,'') + "M";
+  if(num >= 1e3) return (num/1e3).toFixed(1).replace(/\.0$/,'') + "K";
+  return num;
+}
+
 // بدء الموقع
 document.getElementById("startBtn").onclick = () => {
   startScreen.style.display = "none";
@@ -121,13 +130,13 @@ function loadVideo(){
   videoPlayer.src = v.src;
   profilePic.src = v.profile || "914512268067030319.jpeg";
   profileHeaderPic.src = v.profile || "914512268067030319.jpeg";
-  likeCount.innerText = v.likes;
-  shareCount.innerText = v.shares;
+  likeCount.innerText = formatNumber(v.likes);
+  shareCount.innerText = formatNumber(v.shares);
   videoDesc.innerText = v.desc;
-  profileFollowers.innerText = v.followers || "2 مليار متابع";
-  profileShares.innerText = v.shares + " مشاركة";
+  profileFollowers.innerText = formatNumber(v.followers || 2e9) + " متابع";
+  profileShares.innerText = formatNumber(v.shares) + " مشاركة";
   liked = false;
-  likeBtn.innerHTML = "🤍<br><small>" + v.likes + "</small>";
+  likeBtn.innerHTML = "🤍<br><small>" + formatNumber(v.likes) + "</small>";
   videoPlayer.play().catch(()=>{});
 }
 
@@ -145,7 +154,7 @@ function prevVideo(){ index = (index - 1 + videos.length) % videos.length; loadV
 // دبل تاب + قلب متحرك
 videoPlayer.addEventListener("dblclick", e => {
   liked = true;
-  likeBtn.innerHTML = "❤️<br><small>" + videos[index].likes + "</small>";
+  likeBtn.innerHTML = "❤️<br><small>" + formatNumber(videos[index].likes) + "</small>";
   heart.style.left = e.clientX + "px";
   heart.style.top = e.clientY + "px";
   heart.style.opacity = 1;
@@ -156,10 +165,10 @@ videoPlayer.addEventListener("dblclick", e => {
   },400);
 });
 
-// اللايك مع اللون الأبيض/أحمر toggle
+// اللايك toggle
 likeBtn.addEventListener("click", ()=>{
   liked = !liked;
-  likeBtn.innerHTML = (liked?"❤️":"🤍") + "<br><small>" + videos[index].likes + "</small>";
+  likeBtn.innerHTML = (liked?"❤️":"🤍") + "<br><small>" + formatNumber(videos[index].likes) + "</small>";
 });
 
 // التعليقات
@@ -187,15 +196,28 @@ function openProfile(){
   profileContainer.style.display = "block";
   profileVideosContainer.innerHTML = "";
   videos.forEach((v,i)=>{
+    const vidWrapper = document.createElement("div");
+    vidWrapper.style.position = "relative";
+
     const vid = document.createElement("video");
-    vid.src = v.src; vid.muted = true; vid.loop = true;
+    vid.src = v.src;
+    vid.muted = true;
+    vid.loop = true;
     vid.onclick = ()=>{
       profileContainer.style.display="none";
       app.style.display="block";
       index = i;
       loadVideo();
     };
-    profileVideosContainer.appendChild(vid);
+
+    const views = document.createElement("div");
+    views.classList.add("views");
+    const randomViews = Math.floor(Math.random()*2e9); 
+    views.innerText = "👁️ " + formatNumber(randomViews);
+
+    vidWrapper.appendChild(vid);
+    vidWrapper.appendChild(views);
+    profileVideosContainer.appendChild(vidWrapper);
   });
 }
 profilePic.onclick = openProfile;
