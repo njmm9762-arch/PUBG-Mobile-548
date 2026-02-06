@@ -126,6 +126,10 @@ document.getElementById("startBtn").onclick = () => {
     .then(res => res.json())
     .then(data => {
       videos = data;
+      videos.forEach(v=>{
+        v.likes = Math.floor(Math.random()*20e6); // لايكات عشوائية لكل فيديو
+        v.shares = Math.floor(Math.random()*1e6); // مشاركات عشوائية لكل فيديو
+      });
       loadVideo();
     })
     .catch(()=>alert("فشل تحميل البيانات!"));
@@ -138,10 +142,10 @@ function loadVideo(){
   profilePic.src = v.profile || "914512268067030319.jpeg";
   profileHeaderPic.src = v.profile || "914512268067030319.jpeg";
   likeCount.innerHTML = "🤍<br><small>" + formatNumber(v.likes) + "</small>";
-  shareCount.innerText = formatNumber(12e6); // ثابت 12M لجميع الفيديوهات
+  shareCount.innerText = formatNumber(v.shares);
   videoDesc.innerText = v.desc;
   profileFollowers.innerText = formatNumber(v.followers || 2e9) + " متابع";
-  profileShares.innerText = formatNumber(12e6) + " مشاركة";
+  profileShares.innerText = formatNumber(12e6) + " مشاركة"; // ثابت في البروفايل
   liked = false;
   videoPlayer.play().catch(()=>{});
 }
@@ -150,7 +154,7 @@ function loadVideo(){
 let startY = 0;
 document.addEventListener("touchstart", e => startY = e.touches[0].clientY);
 document.addEventListener("touchend", e => {
-  if(profileContainer.style.display === "block") return; // لا يتحرك الفيديو الرئيسي عند البروفايل
+  if(profileContainer.style.display === "block") return;
   let endY = e.changedTouches[0].clientY;
   if(startY - endY > 50) nextVideo();
   if(endY - startY > 50) prevVideo();
