@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tik NEGM</title>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#000;color:#fff;overflow:hidden;}
+#startScreen{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:1000;}
+#startScreen img{width:120px;margin-bottom:30px;}
+#startBtn{padding:15px 40px;font-size:18px;border:none;border-radius:30px;background:#ff0050;color:#fff;cursor:pointer;}
+.hidden{display:none;}
+#app{position:relative;width:100%;height:100vh;}
+video{width:100%;height:100%;object-fit:cover;}
+.top-bar{position:absolute;top:10px;left:10px;z-index:1000;}
+.logo{font-size:26px;font-weight:bold;color:#00f2ea;} .logo span{color:#ff0050;}
+.side-actions{position:absolute;right:10px;bottom:120px;display:flex;flex-direction:column;gap:20px;align-items:center;}
+.side-actions img{width:45px;height:45px;border-radius:50%;border:2px solid #fff;cursor:pointer;}
+.side-actions .action{font-size:26px;text-align:center;cursor:pointer;}
+.side-actions .action small{font-size:14px;display:block;text-align:center;margin-top:2px;}
+.bottom-info{position:absolute;bottom:20px;left:10px;}
+.bottom-info .username{font-size:26px;font-weight:900;}
+.bottom-info .desc{font-size:16px;opacity:0.9;}
+#profile{display:none;background:#000;min-height:100vh;padding-top:70px;}
+.profile-header{text-align:center;}
+.profile-header img{width:90px;height:90px;border-radius:50%;}
+.profile-header h2{margin:10px 0 5px;}
+.profile-header span{opacity:0.7;display:block;}
+.profile-videos{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:20px;}
+.profile-videos video{width:100%;height:200px;object-fit:cover;cursor:pointer;}
+.follow{background:#ff0050;padding:6px 14px;border-radius:6px;display:inline-block;margin-top:10px;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div id="startScreen">
+  <img src="914512268067030319.jpeg">
+  <button id="startBtn">ابدأ المشاهدة</button>
+</div>
+
+<div id="app" class="hidden">
+  <div class="top-bar"><div class="logo">Tik <span>NEGM</span></div></div>
+  <video id="videoPlayer" autoplay muted loop playsinline></video>
+
+  <div class="side-actions">
+    <img src="914512268067030319.jpeg" onclick="openProfile()">
+    <div class="action" id="likeBtn">❤️<small id="likeCount">0</small></div>
+    <div class="action" onclick="alert('معلق حاليًا')">💬</div>
+    <div class="action" onclick="alert('خيارات المشاركة: تنزيل الفيديو - نسخ الرابط - جودة')">➥<small id="shareCount">0</small></div>
+  </div>
+
+  <div class="bottom-info">
+    <div class="username">★ Tik NEGM ★</div>
+    <div class="desc" id="videoDesc">فيديو جميل</div>
+    <div>👁️ <span id="viewsCount">0</span> مشاهدة</div>
+    <div class="follow">متابعة · 2 مليار</div>
+  </div>
+</div>
+
+<div id="profile">
+  <div class="profile-header">
+    <img src="914512268067030319.jpeg">
+    <h2>Tik NEGM</h2>
+    <span>2 مليار متابع</span>
+  </div>
+  <div class="profile-videos" id="profileVideos"></div>
+</div>
+
+<script>
+let videos=[]; let index=0; let liked=false;
+const videoPlayer=document.getElementById("videoPlayer");
+const likeBtn=document.getElementById("likeBtn");
+const likeCount=document.getElementById("likeCount");
+const shareCount=document.getElementById("shareCount");
+const viewsCount=document.getElementById("viewsCount");
+const videoDesc=document.getElementById("videoDesc");
+
+fetch('data.json').then(res=>res.json()).then(data=>{
+  videos=data;
+  document.getElementById("startBtn").onclick=()=>{
+    document.getElementById("startScreen").style.display="none";
+    document.getElementById("app").classList.remove("hidden");
+    loadVideo();
+  };
+});
+
+function loadVideo(){
+  const v=videos[index];
+  videoPlayer.src=v.src;
+  likeCount.innerText=v.likes;
+  shareCount.innerText=v.shares;
+  viewsCount.innerText=v.views;
+  videoDesc.innerText=v.desc;
+  liked=false;
+  likeBtn.innerText="❤️"+v.likes;
+}
+
+let startY=0;
+document.addEventListener("touchstart",e=>startY=e.touches[0].clientY);
+document.addEventListener("touchend",e=>{
+  let endY=e.changedTouches[0].clientY;
+  if(startY-endY>50) nextVideo();
+  if(endY-startY>50) prevVideo();
+});
+function nextVideo(){index=(index+1)%videos.length;loadVideo();}
+function prevVideo(){index=(index-1+videos.length)%videos.length;loadVideo();}
+
+likeBtn.onclick=()=>{liked=!liked;likeBtn.innerText=liked?"❤️"+videos[index].likes:"❤️"+videos[index].likes;}
+videoPlayer.addEventListener("dblclick",()=>{liked=true;likeBtn.innerText="❤️"+videos[index].likes;});
+
+function openProfile(){
+  document.getElementById("app").classList.add("hidden");
+  document.getElementById("profile").style.display="block";
+  const container=document.getElementById("profileVideos");
+  container.innerHTML="";
+  videos.forEach(v=>{
+    const vid=document.createElement("video");
+    vid.src=v.src; vid.muted=true; vid.loop=true;
+    vid.onclick=()=>{document.getElementById("profile").style.display="none";document.getElementById("app").classList.remove("hidden");};
+    container.appendChild(vid);
+  });
+}
+</script>
+</body>
+</html>
