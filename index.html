@@ -7,7 +7,7 @@
 <style>
 body,html{margin:0;padding:0;height:100%;overflow:hidden;background:#000;color:#fff;font-family:Arial,sans-serif;}
 #startScreen{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:1000;}
-#startScreen img{width:120px;margin-bottom:20px;}
+#startScreen img{width:120px;margin-bottom:30px;}
 #startBtn{padding:15px 40px;font-size:18px;border:none;border-radius:30px;background:#ff0050;color:#fff;cursor:pointer;}
 #app{position:relative;width:100%;height:100vh;overflow:hidden;display:none;}
 video{width:100%;height:100%;object-fit:contain;display:block;}
@@ -30,7 +30,9 @@ video{width:100%;height:100%;object-fit:contain;display:block;}
 .profile-videos{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:10px;}
 .profile-videos video{width:100%;height:150px;object-fit:cover;cursor:pointer;border-radius:8px;}
 #heart{position:absolute;font-size:80px;color:red;opacity:0;transform:translate(-50%,-50%);pointer-events:none;transition:opacity 0.4s;}
-#uploadBtn{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:60px;height:60px;background:#ff0050;border-radius:50%;display:flex;justify-content:center;align-items:center;font-size:36px;color:#fff;cursor:pointer;z-index:1000;}
+#uploadBtn{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:#ff0050;color:#fff;padding:10px 20px;border-radius:20px;cursor:pointer;z-index:1000;}
+#miniPreview{position:absolute;top:80px;right:10px;width:80px;height:80px;border-radius:8px;border:2px solid #fff;display:none;overflow:hidden;}
+#miniPreview video{width:100%;height:100%;object-fit:cover;}
 </style>
 </head>
 <body>
@@ -42,11 +44,11 @@ video{width:100%;height:100%;object-fit:contain;display:block;}
 
 <div id="app">
   <div class="top-bar">TIK <span>NEGM</span></div>
-  <video id="videoPlayer" autoplay playsinline></video>
+  <video id="videoPlayer" autoplay playsinline muted></video>
   <div id="heart">❤️</div>
 
   <div class="side-actions">
-    <img id="profilePic" src="914512268067030319.jpeg">
+    <img id="profilePic" src="">
     <div class="action" id="likeBtn">🤍<br><small id="likeCount">0</small></div>
     <div class="action" id="commentBtn">💬</div>
     <div class="action" id="shareBtn">➥<small id="shareCount">0</small></div>
@@ -55,26 +57,33 @@ video{width:100%;height:100%;object-fit:contain;display:block;}
   <div class="share-options" id="shareOptions">
     <button id="downloadBtn">↓ تنزيل</button>
     <button id="copyBtn">🔗 نسخ</button>
-    <button id="shareWhatsApp">واتساب</button>
-    <button id="shareInstagram">إنستقرام</button>
+    <button id="shareAppBtn">💌 مشاركة</button>
   </div>
+
+  <div class="bottom-info">
+    <div class="username" id="username">★ TIK NEGM ★</div>
+    <div class="desc" id="videoDesc">فيديو جميل</div>
+  </div>
+
+  <div id="miniPreview"><video id="miniVideo" muted></video></div>
+  <input type="file" id="uploadInput" accept="video/*" style="display:none;">
+  <button id="uploadBtn">رفع فيديو جديد</button>
 </div>
 
 <div id="profile">
   <div class="profile-header">
     <span id="closeProfile">×</span>
-    <img id="profileHeaderPic" src="914512268067030319.jpeg">
+    <img id="profileHeaderPic" src="">
     <h2 id="profileName">TIK NEGM</h2>
   </div>
   <div class="profile-videos" id="profileVideos"></div>
-  <div id="uploadBtn">+</div>
 </div>
 
 <script>
 let videos = [];
 let index = 0;
-let likedVideos = {}; // حفظ حالة اللايك لكل فيديو
-let autoPlay = true;
+let liked = false;
+let likedVideos = {};
 
 const videoPlayer = document.getElementById("videoPlayer");
 const likeBtn = document.getElementById("likeBtn");
@@ -89,48 +98,47 @@ const shareBtn = document.getElementById("shareBtn");
 const shareOptions = document.getElementById("shareOptions");
 const downloadBtn = document.getElementById("downloadBtn");
 const copyBtn = document.getElementById("copyBtn");
-const shareWhatsApp = document.getElementById("shareWhatsApp");
-const shareInstagram = document.getElementById("shareInstagram");
+const shareAppBtn = document.getElementById("shareAppBtn");
 const profileContainer = document.getElementById("profile");
 const profileVideosContainer = document.getElementById("profileVideos");
 const profileHeaderPic = document.getElementById("profileHeaderPic");
 const closeProfileBtn = document.getElementById("closeProfile");
 const uploadBtn = document.getElementById("uploadBtn");
+const uploadInput = document.getElementById("uploadInput");
+const miniPreview = document.getElementById("miniPreview");
+const miniVideo = document.getElementById("miniVideo");
 
 // تحويل الرقم لاختصار
 function formatNumber(num){
   if(num >= 1e9) return (num/1e9).toFixed(1).replace(/\.0$/,'') + "B";
   if(num >= 1e6) return (num/1e6).toFixed(1).replace(/\.0$/,'') + "M";
-  if(num >= 1e3) return (num/1e3).toFixed(1).replace(/\.0$/,'K');
+  if(num >= 1e3) return (num/1e3).toFixed(1).replace(/\.0$/,'') + "K";
   return num;
 }
 
 // بدء الموقع
-startBtn.onclick = () => {
+document.getElementById("startBtn").onclick = () => {
   startScreen.style.display = "none";
   app.style.display = "block";
+  videoPlayer.muted = false;
   fetch('data.json')
     .then(res => res.json())
     .then(data => {
-      videos = data.slice(0,39);
+      videos = data.slice(0,39); // أول 39 فيديو
       videos.forEach(v=>{
         v.likes = Math.floor(Math.random()*20e6);
         v.shares = Math.floor(Math.random()*1e6);
         v.views = Math.floor(Math.random()*2e9);
       });
       loadVideo();
-      preventSleep();
     })
-    .catch(()=>alert("فشل تحميل البيانات!"));
+    .catch(()=>{alert("فشل تحميل البيانات! سيتم الدخول مباشرة."); videos=[];});
 };
 
-// تحميل الفيديو
 function loadVideo(){
-  if(videos.length === 0) return;
+  if(videos.length===0) return;
   const v = videos[index];
   videoPlayer.src = v.src;
-  videoPlayer.loop = true;
-  videoPlayer.muted = false;
   profilePic.src = v.profile || "914512268067030319.jpeg";
   profileHeaderPic.src = v.profile || "914512268067030319.jpeg";
   likeCount.innerHTML = (likedVideos[v.src]?"❤️":"🤍") + "<br><small>" + formatNumber(v.likes) + "</small>";
@@ -139,113 +147,94 @@ function loadVideo(){
   videoPlayer.play().catch(()=>{});
 }
 
-// دبل تاب لايك
-videoPlayer.addEventListener("dblclick", e=>{
-  likedVideos[videos[index].src]=true;
-  likeBtn.innerHTML = "❤️<br><small>"+formatNumber(videos[index].likes)+"</small>";
-  heart.style.left = e.clientX + "px";
-  heart.style.top = e.clientY + "px";
-  heart.style.opacity=1;
-  heart.style.transform="translate(-50%,-50%) scale(1.5)";
-  setTimeout(()=>{heart.style.opacity=0; heart.style.transform="translate(-50%,-50%) scale(1)";},400);
-});
+// الفيديو يعاد تلقائياً
+videoPlayer.addEventListener("ended", ()=>{nextVideo();});
 
-// toggle لايك
-likeBtn.onclick = ()=>{
-  let v = videos[index];
-  likedVideos[v.src] = !likedVideos[v.src];
-  likeBtn.innerHTML = (likedVideos[v.src]?"❤️":"🤍")+"<br><small>"+formatNumber(v.likes)+"</small>";
-};
-
-// التعليقات
-document.getElementById("commentBtn").onclick = ()=>alert("معلق حاليًا");
-
-// خيارات المشاركة
-shareBtn.onclick = ()=>{shareOptions.style.display = shareOptions.style.display==="flex"?"none":"flex";}
-
-// تنزيل الفيديو
-downloadBtn.onclick = ()=>{
-  const a = document.createElement("a");
-  a.href = videoPlayer.src;
-  a.download="TIKNEGM.mp4";
-  a.click();
-};
-
-// نسخ الرابط
-copyBtn.onclick = ()=>navigator.clipboard.writeText(window.location.href).then(()=>alert("تم نسخ الرابط!"));
-
-// مشاركة واتساب
-shareWhatsApp.onclick = ()=>{
-  const v = videos[index];
-  const msg = encodeURIComponent(`موقع TIK NEGM\n${v.desc}\nرابط الموقع: ${window.location.href}`);
-  window.open(`https://wa.me/?text=${msg}`,"_blank");
-};
-
-// مشاركة إنستجرام (فتح الرابط فقط لأنه لا يوجد مشاركة مباشرة)
-shareInstagram.onclick = ()=>{
-  alert("انسخ الرابط وشاركه على إنستجرام:\n"+window.location.href);
-};
-
-// فتح البروفايل
-function openProfile(){
-  videoPlayer.pause();
-  app.style.display="none";
-  profileContainer.style.display="block";
-  profileVideosContainer.innerHTML="";
-  videos.forEach((v,i)=>{
-    const vid = document.createElement("video");
-    vid.src = v.src;
-    vid.muted = true;
-    vid.loop = true;
-    vid.onclick = ()=>{
-      profileContainer.style.display="none";
-      app.style.display="block";
-      index=i;
-      loadVideo();
-    };
-    profileVideosContainer.appendChild(vid);
-  });
-}
-
-// رفع فيديو جديد
-uploadBtn.onclick = ()=>{
-  const input = document.createElement("input");
-  input.type="file";
-  input.accept="video/*";
-  input.onchange = e=>{
-    const file = e.target.files[0];
-    if(file){
-      const url = URL.createObjectURL(file);
-      videos.push({src:url,desc:file.name,likes:0,shares:0,views:0,profile:"914512268067030319.jpeg"});
-      loadVideo();
-      openProfile();
-    }
-  };
-  input.click();
-}
-
-profilePic.onclick = openProfile;
-closeProfileBtn.onclick = ()=>{profileContainer.style.display="none"; app.style.display="block";}
-
-// Scroll سلس
+// Scroll سلس للفيديو الرئيسي
 let startY=0;
-document.addEventListener("touchstart",e=>startY=e.touches[0].clientY);
-document.addEventListener("touchend",e=>{
-  let endY=e.changedTouches[0].clientY;
+document.addEventListener("touchstart", e=>startY=e.touches[0].clientY);
+document.addEventListener("touchend", e=>{
   if(profileContainer.style.display==="block") return;
+  let endY=e.changedTouches[0].clientY;
   if(startY-endY>50) nextVideo();
   if(endY-startY>50) prevVideo();
 });
 function nextVideo(){ index=(index+1)%videos.length; loadVideo(); }
 function prevVideo(){ index=(index-1+videos.length)%videos.length; loadVideo(); }
 
-// منع قفل الهاتف أثناء المشاهدة
-function preventSleep(){
-  let noSleep = document.createElement("iframe");
-  noSleep.src="about:blank";
-  noSleep.style.display="none";
-  document.body.appendChild(noSleep);
+// دبل تاب + قلب متحرك
+videoPlayer.addEventListener("dblclick", e=>{
+  likedVideos[videos[index].src]=true;
+  likeBtn.innerHTML="❤️<br><small>"+formatNumber(videos[index].likes)+"</small>";
+  heart.style.left=e.clientX+"px";
+  heart.style.top=e.clientY+"px";
+  heart.style.opacity=1;
+  heart.style.transform="translate(-50%,-50%) scale(1.5)";
+  setTimeout(()=>{heart.style.opacity=0; heart.style.transform="translate(-50%,-50%) scale(1)";},400);
+});
+
+// toggle like
+likeBtn.addEventListener("click", ()=>{
+  likedVideos[videos[index].src]=!likedVideos[videos[index].src];
+  likeBtn.innerHTML=(likedVideos[videos[index].src]?"❤️":"🤍") + "<br><small>"+formatNumber(videos[index].likes)+"</small>";
+});
+
+// التعليقات
+document.getElementById("commentBtn").onclick=()=>alert("معلق حاليًا");
+
+// خيارات المشاركة
+shareBtn.onclick=()=>{shareOptions.style.display=shareOptions.style.display==="flex"?"none":"flex";}
+downloadBtn.onclick=()=>{
+  const a=document.createElement("a");
+  a.href=videoPlayer.src;
+  a.download="TIKNEGM.mp4";
+  a.click();
+};
+copyBtn.onclick=()=>{navigator.clipboard.writeText(window.location.href).then(()=>alert("تم نسخ الرابط!"));}
+shareAppBtn.onclick=()=>{
+  let msg=`لغو الموقع\nوصف الفيديو: ${videoDesc.innerText}\n${window.location.href}`;
+  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`);
+};
+
+// رفع فيديو جديد
+uploadBtn.onclick=()=>uploadInput.click();
+uploadInput.onchange=()=>{
+  const file=uploadInput.files[0];
+  if(!file) return;
+  const url=URL.createObjectURL(file);
+  const desc=prompt("اكتب وصف للفيديو:");
+  const newVideo={src:url,profile:"914512268067030319.jpeg",desc:desc,likes:0,shares:0,views:0};
+  videos.unshift(newVideo);
+  miniVideo.src=url;
+  miniPreview.style.display="block";
+  setTimeout(()=>{miniPreview.style.display="none"; loadVideo();},5000);
+  setTimeout(()=>{
+    newVideo.likes=30000000;
+    likedVideos[url]=true;
+    loadVideo();
+  },10000);
+};
+
+// صفحة البروفايل
+function openProfile(){
+  videoPlayer.pause();
+  app.style.display="none";
+  profileContainer.style.display="block";
+  profileVideosContainer.innerHTML="";
+  videos.forEach((v,i)=>{
+    const vid=document.createElement("video");
+    vid.src=v.src; vid.muted=true; vid.loop=true;
+    vid.onclick=()=>{
+      profileContainer.style.display="none";
+      app.style.display="block";
+      index=i; loadVideo();
+    };
+    profileVideosContainer.appendChild(vid);
+  });
 }
+
+profilePic.onclick=openProfile;
+closeProfileBtn.onclick=()=>{profileContainer.style.display="none"; app.style.display="block";}
 </script>
 
 </body>
