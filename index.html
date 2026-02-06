@@ -23,7 +23,7 @@ video{width:100%;height:100%;object-fit:contain;display:block;}
 .share-options{position:absolute;bottom:60px;right:10px;background:rgba(0,0,0,0.7);border-radius:10px;padding:10px;display:none;flex-direction:column;gap:5px;z-index:1000;}
 .share-options button{background:#ff0050;border:none;color:#fff;padding:5px 10px;border-radius:6px;font-size:14px;cursor:pointer;}
 #profile{display:none;background:#000;min-height:100vh;padding-top:70px;}
-.profile-header{text-align:center;}
+.profile-header{text-align:center;position:relative;}
 .profile-header img{width:90px;height:90px;border-radius:50%;}
 .profile-header h2{margin:10px 0 5px;}
 .profile-header span{opacity:0.7;display:block;}
@@ -47,7 +47,7 @@ video{width:100%;height:100%;object-fit:contain;display:block;}
 
   <div class="side-actions">
     <img id="profilePic" src="">
-    <div class="action" id="likeBtn">❤️<small id="likeCount">0</small></div>
+    <div class="action" id="likeBtn">🤍<br><small id="likeCount">0</small></div>
     <div class="action" id="commentBtn">💬</div>
     <div class="action" id="shareBtn">➥<small id="shareCount">0</small></div>
   </div>
@@ -61,7 +61,8 @@ video{width:100%;height:100%;object-fit:contain;display:block;}
   <div class="bottom-info">
     <div class="username" id="username">★ TIK NEGM ★</div>
     <div class="desc" id="videoDesc">فيديو جميل</div>
-    <div class="follow">متابعة · 2 مليار</div>
+    <div id="profileStats">متابعين: 2 مليار · مشاركات: 150K</div>
+    <div class="follow">متابعة</div>
   </div>
 </div>
 
@@ -70,6 +71,7 @@ video{width:100%;height:100%;object-fit:contain;display:block;}
     <img id="profileHeaderPic" src="">
     <h2 id="profileName">TIK NEGM</h2>
     <span id="profileFollowers">2 مليار متابع</span>
+    <span id="profileShares">150K مشاركة</span>
   </div>
   <div class="profile-videos" id="profileVideos"></div>
 </div>
@@ -93,12 +95,17 @@ const shareOptions = document.getElementById("shareOptions");
 const downloadBtn = document.getElementById("downloadBtn");
 const copyBtn = document.getElementById("copyBtn");
 const shareAppBtn = document.getElementById("shareAppBtn");
+const profileContainer = document.getElementById("profile");
+const profileVideosContainer = document.getElementById("profileVideos");
+const profileFollowers = document.getElementById("profileFollowers");
+const profileShares = document.getElementById("profileShares");
+const profileHeaderPic = document.getElementById("profileHeaderPic");
 
-// تشغيل الموقع عند الضغط على الزر
+// بدء الموقع
 document.getElementById("startBtn").onclick = () => {
   startScreen.style.display = "none";
   app.style.display = "block";
-  videoPlayer.muted = false; 
+  videoPlayer.muted = false;
   fetch('data.json')
     .then(res => res.json())
     .then(data => {
@@ -113,11 +120,14 @@ function loadVideo(){
   const v = videos[index];
   videoPlayer.src = v.src;
   profilePic.src = v.profile || "914512268067030319.jpeg";
+  profileHeaderPic.src = v.profile || "914512268067030319.jpeg";
   likeCount.innerText = v.likes;
   shareCount.innerText = v.shares;
   videoDesc.innerText = v.desc;
+  profileFollowers.innerText = v.followers || "2 مليار متابع";
+  profileShares.innerText = v.shares + " مشاركة";
   liked = false;
-  likeBtn.innerHTML = "❤️<br><small>" + v.likes + "</small>";
+  likeBtn.innerHTML = "🤍<br><small>" + v.likes + "</small>";
   videoPlayer.play().catch(()=>{});
 }
 
@@ -146,6 +156,12 @@ videoPlayer.addEventListener("dblclick", e => {
   },400);
 });
 
+// اللايك مع اللون الأبيض/أحمر toggle
+likeBtn.addEventListener("click", ()=>{
+  liked = !liked;
+  likeBtn.innerHTML = (liked?"❤️":"🤍") + "<br><small>" + videos[index].likes + "</small>";
+});
+
 // التعليقات
 document.getElementById("commentBtn").onclick = () => alert("معلق حاليًا");
 
@@ -166,15 +182,20 @@ shareAppBtn.onclick = ()=>{
 
 // صفحة البروفايل
 function openProfile(){
+  videoPlayer.pause();
   app.style.display = "none";
-  document.getElementById("profile").style.display = "block";
-  const container = document.getElementById("profileVideos");
-  container.innerHTML = "";
-  videos.forEach(v => {
+  profileContainer.style.display = "block";
+  profileVideosContainer.innerHTML = "";
+  videos.forEach((v,i)=>{
     const vid = document.createElement("video");
     vid.src = v.src; vid.muted = true; vid.loop = true;
-    vid.onclick = ()=>{document.getElementById("profile").style.display="none"; app.style.display="block";};
-    container.appendChild(vid);
+    vid.onclick = ()=>{
+      profileContainer.style.display="none";
+      app.style.display="block";
+      index = i;
+      loadVideo();
+    };
+    profileVideosContainer.appendChild(vid);
   });
 }
 profilePic.onclick = openProfile;
