@@ -10,13 +10,15 @@ body,html{margin:0;padding:0;height:100%;overflow:hidden;background:#000;color:#
 #startScreen img{width:120px;margin-bottom:30px;}
 #startBtn{padding:15px 40px;font-size:18px;border:none;border-radius:30px;background:#ff0050;color:#fff;cursor:pointer;}
 #app{position:relative;width:100%;height:100vh;overflow:hidden;display:none;}
-video{width:100%;height:100%;object-fit:cover;}
+video{width:100%;height:100%;object-fit:contain;}
 .top-bar{position:absolute;top:10px;left:10px;z-index:1000;font-size:26px;font-weight:bold;color:#00f2ea;}
 .top-bar span{color:#ff0050;}
 .side-actions{position:absolute;right:10px;bottom:120px;display:flex;flex-direction:column;gap:20px;align-items:center;}
 .side-actions img{width:45px;height:45px;border-radius:50%;border:2px solid #fff;cursor:pointer;}
-.side-actions .action{font-size:26px;text-align:center;cursor:pointer;}
+.side-actions .action{font-size:26px;text-align:center;cursor:pointer;position:relative;}
 .side-actions .action small{font-size:14px;display:block;text-align:center;margin-top:2px;}
+.share-popup{position:absolute;bottom:50px;right:50px;background:#111;padding:10px;border-radius:10px;display:none;flex-direction:column;gap:10px;}
+.share-popup button{padding:8px 14px;border:none;border-radius:6px;background:#222;color:#fff;cursor:pointer;}
 .bottom-info{position:absolute;bottom:20px;left:10px;}
 .bottom-info .username{font-size:26px;font-weight:900;}
 .bottom-info .desc{font-size:16px;opacity:0.9;}
@@ -26,9 +28,9 @@ video{width:100%;height:100%;object-fit:cover;}
 .profile-header h2{margin:10px 0 5px;}
 .profile-header span{opacity:0.7;display:block;}
 .profile-videos{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:20px;}
-.profile-videos video{width:100%;height:200px;object-fit:cover;cursor:pointer;}
+.profile-videos video{width:100%;height:200px;object-fit:contain;cursor:pointer;}
 .follow{background:#ff0050;padding:6px 14px;border-radius:6px;display:inline-block;margin-top:10px;cursor:pointer;}
-#heart{position:absolute;font-size:80px;color:red;opacity:0;transform:translate(-50%,-50%);pointer-events:none;transition:opacity 0.4s;}
+#heart{position:absolute;font-size:80px;color:red;opacity:0;transform:translate(-50%,-50%);pointer-events:none;transition:opacity 0.4s,transform 0.4s;}
 </style>
 </head>
 <body>
@@ -47,7 +49,13 @@ video{width:100%;height:100%;object-fit:cover;}
     <img src="914512268067030319.jpeg" onclick="openProfile()">
     <div class="action" id="likeBtn">❤️<small id="likeCount">0</small></div>
     <div class="action" onclick="alert('معلق حاليًا')">💬</div>
-    <div class="action" onclick="alert('خيارات المشاركة: تنزيل الفيديو - نسخ الرابط - جودة')">➥<small id="shareCount">0</small></div>
+    <div class="action" id="shareBtn">➥<small id="shareCount">0</small>
+      <div class="share-popup" id="sharePopup">
+        <button onclick="downloadVideo()">⬇️ تنزيل الفيديو</button>
+        <button onclick="copyLink()">🔗 نسخ الرابط</button>
+        <button onclick="chooseQuality()">⚙️ اختيار الجودة</button>
+      </div>
+    </div>
   </div>
 
   <div class="bottom-info">
@@ -80,6 +88,8 @@ const videoDesc = document.getElementById("videoDesc");
 const heart = document.getElementById("heart");
 const app = document.getElementById("app");
 const startScreen = document.getElementById("startScreen");
+const shareBtn = document.getElementById("shareBtn");
+const sharePopup = document.getElementById("sharePopup");
 
 // الزر يشتغل فورًا
 document.getElementById("startBtn").onclick = () => {
@@ -94,6 +104,7 @@ document.getElementById("startBtn").onclick = () => {
     .catch(()=>alert("فشل تحميل البيانات!"));
 };
 
+// تحميل الفيديو
 function loadVideo(){
   if(videos.length === 0) return;
   const v = videos[index];
@@ -104,7 +115,7 @@ function loadVideo(){
   videoDesc.innerText = v.desc;
   liked = false;
   likeBtn.innerText = "❤️" + v.likes;
-  videoPlayer.play().catch(()=>{}); // حماية من منع autoplay
+  videoPlayer.play().catch(()=>{});
 }
 
 // Scroll سلس
@@ -118,7 +129,7 @@ document.addEventListener("touchend", e => {
 function nextVideo(){ index = (index + 1) % videos.length; loadVideo(); }
 function prevVideo(){ index = (index - 1 + videos.length) % videos.length; loadVideo(); }
 
-// دبل تاب + قلب متحرك
+// دبل تاب + قلب
 videoPlayer.addEventListener("dblclick", e => {
   liked = true;
   likeBtn.innerText = "❤️" + videos[index].likes;
@@ -126,10 +137,7 @@ videoPlayer.addEventListener("dblclick", e => {
   heart.style.top = e.clientY + "px";
   heart.style.opacity = 1;
   heart.style.transform = "translate(-50%, -50%) scale(1.5)";
-  setTimeout(()=>{
-    heart.style.opacity = 0;
-    heart.style.transform = "translate(-50%, -50%) scale(1)";
-  },400);
+  setTimeout(()=>{heart.style.opacity = 0; heart.style.transform="translate(-50%, -50%) scale(1)";},400);
 });
 
 // صفحة البروفايل
@@ -145,7 +153,16 @@ function openProfile(){
     container.appendChild(vid);
   });
 }
-</script>
 
+// أزرار المشاركة
+shareBtn.onclick = (e)=>{
+  e.stopPropagation();
+  sharePopup.style.display = sharePopup.style.display === 'flex' ? 'none':'flex';
+};
+function downloadVideo(){ window.open(videos[index].src,'_blank'); }
+function copyLink(){ navigator.clipboard.writeText(location.href); alert('تم نسخ الرابط!'); }
+function chooseQuality(){ alert('اختيار الجودة'); }
+
+</script>
 </body>
 </html>
