@@ -10,16 +10,13 @@ body,html{margin:0;padding:0;height:100%;overflow:hidden;background:#000;color:#
 #startScreen img{width:120px;margin-bottom:30px;}
 #startBtn{padding:15px 40px;font-size:18px;border:none;border-radius:30px;background:#ff0050;color:#fff;cursor:pointer;}
 #app{position:relative;width:100%;height:100vh;overflow:hidden;display:none;}
-video{width:100%;height:100%;object-fit:contain;}
+video{width:100%;height:100%;object-fit:cover;}
 .top-bar{position:absolute;top:10px;left:10px;z-index:1000;font-size:26px;font-weight:bold;color:#00f2ea;}
 .top-bar span{color:#ff0050;}
 .side-actions{position:absolute;right:10px;bottom:120px;display:flex;flex-direction:column;gap:20px;align-items:center;}
 .side-actions img{width:45px;height:45px;border-radius:50%;border:2px solid #fff;cursor:pointer;}
-.side-actions .action{font-size:26px;text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;position:relative;}
-.side-actions .action small{font-size:14px;margin-top:4px;}
-.share-popup{position:absolute;bottom:50px;right:50px;background:#111;padding:10px;border-radius:10px;display:none;flex-direction:column;gap:10px;z-index:2000;}
-.share-popup div{display:flex;justify-content:space-around;}
-.share-popup div div{cursor:pointer;text-align:center;}
+.side-actions .action{font-size:26px;text-align:center;cursor:pointer;}
+.side-actions .action small{font-size:14px;display:block;text-align:center;margin-top:2px;}
 .bottom-info{position:absolute;bottom:20px;left:10px;}
 .bottom-info .username{font-size:26px;font-weight:900;}
 .bottom-info .desc{font-size:16px;opacity:0.9;}
@@ -29,12 +26,9 @@ video{width:100%;height:100%;object-fit:contain;}
 .profile-header h2{margin:10px 0 5px;}
 .profile-header span{opacity:0.7;display:block;}
 .profile-videos{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:20px;}
-.profile-videos .vidWrapper{position:relative;}
-.profile-videos video{width:100%;height:200px;object-fit:contain;cursor:pointer;}
-.profile-videos .viewsBadge{position:absolute;bottom:5px;left:5px;color:#fff;font-size:12px;background:rgba(0,0,0,0.5);padding:2px 4px;border-radius:4px;}
+.profile-videos video{width:100%;height:200px;object-fit:cover;cursor:pointer;}
 .follow{background:#ff0050;padding:6px 14px;border-radius:6px;display:inline-block;margin-top:10px;cursor:pointer;}
-#heart{position:absolute;font-size:80px;color:red;opacity:0;transform:translate(-50%,-50%);pointer-events:none;transition:opacity 0.4s,transform 0.4s;}
-#fullScreenBtn{position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(0,0,0,0.5);padding:10px;border-radius:50%;cursor:pointer;z-index:1000;font-size:24px;}
+#heart{position:absolute;font-size:80px;color:red;opacity:0;transform:translate(-50%,-50%);pointer-events:none;transition:opacity 0.4s;}
 </style>
 </head>
 <body>
@@ -48,29 +42,16 @@ video{width:100%;height:100%;object-fit:contain;}
   <div class="top-bar">Tik <span>NEGM</span></div>
   <video id="videoPlayer" autoplay playsinline muted></video>
   <div id="heart">❤️</div>
-  <div id="fullScreenBtn">⛶</div>
 
   <div class="side-actions">
-    <img src="914512268067030319.jpeg" onclick="openProfile()">
-    <div class="action" id="likeBtn">
-      ❤️
-      <small id="likeCount">0</small>
-    </div>
-    <div class="action" onclick="alert('معلق حاليًا')">💬</div>
-    <div class="action" id="shareBtn">➥
-      <small id="shareCount">0</small>
-      <div class="share-popup" id="sharePopup">
-        <div>
-          <div onclick="downloadVideo()">↓<br>تنزيل</div>
-          <div onclick="copyLink()">🔗<br>نسخ</div>
-          <div onclick="shareVideo()">💌<br>مشاركة</div>
-        </div>
-      </div>
-    </div>
+    <img id="profilePic" src="">
+    <div class="action" id="likeBtn">❤️<small id="likeCount">0</small></div>
+    <div class="action" id="commentBtn">💬</div>
+    <div class="action" id="shareBtn">➥<small id="shareCount">0</small></div>
   </div>
 
   <div class="bottom-info">
-    <div class="username">★ Tik NEGM ★</div>
+    <div class="username" id="username">★ Tik NEGM ★</div>
     <div class="desc" id="videoDesc">فيديو جميل</div>
     <div class="follow">متابعة · 2 مليار</div>
   </div>
@@ -78,17 +59,18 @@ video{width:100%;height:100%;object-fit:contain;}
 
 <div id="profile">
   <div class="profile-header">
-    <img src="914512268067030319.jpeg">
-    <h2>Tik NEGM</h2>
-    <span>2 مليار متابع</span>
+    <img id="profileHeaderPic" src="">
+    <h2 id="profileName">Tik NEGM</h2>
+    <span id="profileFollowers">2 مليار متابع</span>
   </div>
   <div class="profile-videos" id="profileVideos"></div>
 </div>
 
 <script>
-let videos = []; 
-let index = 0; 
+let videos = [];
+let index = 0;
 let liked = false;
+
 const videoPlayer = document.getElementById("videoPlayer");
 const likeBtn = document.getElementById("likeBtn");
 const likeCount = document.getElementById("likeCount");
@@ -97,44 +79,33 @@ const videoDesc = document.getElementById("videoDesc");
 const heart = document.getElementById("heart");
 const app = document.getElementById("app");
 const startScreen = document.getElementById("startScreen");
-const shareBtn = document.getElementById("shareBtn");
-const sharePopup = document.getElementById("sharePopup");
-const fullScreenBtn = document.getElementById("fullScreenBtn");
-let isFullScreen = false;
+const profilePic = document.getElementById("profilePic");
 
-// زر الدخول
+// تشغيل الموقع عند الضغط على الزر
 document.getElementById("startBtn").onclick = () => {
   startScreen.style.display = "none";
   app.style.display = "block";
   videoPlayer.muted = false; 
   fetch('data.json')
     .then(res => res.json())
-    .then(data => { videos = data; loadVideo(); })
+    .then(data => {
+      videos = data;
+      loadVideo();
+    })
     .catch(()=>alert("فشل تحميل البيانات!"));
 };
 
-// تحميل الفيديو والتحكم بالحجم
 function loadVideo(){
   if(videos.length === 0) return;
   const v = videos[index];
   videoPlayer.src = v.src;
+  profilePic.src = v.profile || "914512268067030319.jpeg"; 
   likeCount.innerText = v.likes;
   shareCount.innerText = v.shares;
   videoDesc.innerText = v.desc;
   liked = false;
-
+  likeBtn.innerText = "❤️" + v.likes;
   videoPlayer.play().catch(()=>{});
-
-  videoPlayer.onloadedmetadata = ()=>{
-    const ratio = videoPlayer.videoWidth / videoPlayer.videoHeight;
-    if(ratio > 1){ // Landscape
-      videoPlayer.style.objectFit = "contain";
-      fullScreenBtn.style.display = "block";
-    } else { // Portrait
-      videoPlayer.style.objectFit = "cover";
-      fullScreenBtn.style.display = "none";
-    }
-  }
 }
 
 // Scroll سلس
@@ -148,92 +119,51 @@ document.addEventListener("touchend", e => {
 function nextVideo(){ index = (index + 1) % videos.length; loadVideo(); }
 function prevVideo(){ index = (index - 1 + videos.length) % videos.length; loadVideo(); }
 
-// دبل تاب + قلب
+// دبل تاب + قلب متحرك
 videoPlayer.addEventListener("dblclick", e => {
   liked = true;
-  likeBtn.innerText = "❤️\n" + videos[index].likes;
+  likeBtn.innerText = "❤️" + videos[index].likes;
   heart.style.left = e.clientX + "px";
   heart.style.top = e.clientY + "px";
   heart.style.opacity = 1;
   heart.style.transform = "translate(-50%, -50%) scale(1.5)";
-  setTimeout(()=>{heart.style.opacity = 0; heart.style.transform="translate(-50%, -50%) scale(1)";},400);
+  setTimeout(()=>{
+    heart.style.opacity = 0;
+    heart.style.transform = "translate(-50%, -50%) scale(1)";
+  },400);
 });
 
-// البروفايل + مشاهدات داخل الفيديوهات
+// التعليقات والمشاركه
+document.getElementById("commentBtn").onclick = () => alert("معلق حاليًا");
+
+document.getElementById("shareBtn").onclick = () => {
+  const choice = prompt("خيارات المشاركة:\n1- تنزيل الفيديو\n2- نسخ الرابط\n3- مشاركة");
+  if(choice==="1"){
+    const a = document.createElement("a");
+    a.href = videoPlayer.src;
+    a.download = "tiknegm.mp4";
+    a.click();
+  } else if(choice==="2"){
+    navigator.clipboard.writeText(window.location.href).then(()=>alert("تم نسخ الرابط!"));
+  } else if(choice==="3"){
+    alert("يمكنك مشاركة الفيديو على أي تطبيق تواصل اجتماعي!");
+  }
+}
+
+// صفحة البروفايل
 function openProfile(){
   app.style.display = "none";
   document.getElementById("profile").style.display = "block";
   const container = document.getElementById("profileVideos");
   container.innerHTML = "";
   videos.forEach(v => {
-    const vidWrapper = document.createElement("div");
-    vidWrapper.className = "vidWrapper";
-
     const vid = document.createElement("video");
     vid.src = v.src; vid.muted = true; vid.loop = true;
     vid.onclick = ()=>{document.getElementById("profile").style.display="none"; app.style.display="block";};
-
-    const views = document.createElement("div");
-    views.className="viewsBadge";
-    views.innerText = `${v.views} مشاهدة`;
-
-    vidWrapper.appendChild(vid);
-    vidWrapper.appendChild(views);
-    container.appendChild(vidWrapper);
+    container.appendChild(vid);
   });
 }
-
-// Full Screen زر
-fullScreenBtn.onclick = ()=>{
-  if(!isFullScreen){
-    videoPlayer.style.objectFit = "cover";
-    videoPlayer.style.width = "100vw";
-    videoPlayer.style.height = "100vh";
-    fullScreenBtn.innerText = "🗗";
-    isFullScreen = true;
-  } else {
-    videoPlayer.style.objectFit = "contain";
-    videoPlayer.style.width = "100%";
-    videoPlayer.style.height = "100%";
-    fullScreenBtn.innerText = "⛶";
-    isFullScreen = false;
-  }
-};
-
-// أزرار المشاركة
-shareBtn.onclick = (e)=>{
-  e.stopPropagation();
-  sharePopup.style.display = sharePopup.style.display === 'flex' ? 'none':'flex';
-};
-
-// تنزيل الفيديو باسم ثابت
-function downloadVideo(){
-  const a = document.createElement('a');
-  a.href = videos[index].src;
-  a.download = 'tiknegm.mp4';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
-
-// نسخ رابط الفيديو
-function copyLink(){
-  const videoUrl = videos[index].src;
-  navigator.clipboard.writeText(videoUrl).then(()=> alert('تم نسخ الرابط!'));
-}
-
-// مشاركة الفيديو على أي تطبيق
-function shareVideo(){
-  if(navigator.share){
-    navigator.share({
-      title: 'فيديو من Tik NEGM',
-      text: 'شاهد هذا الفيديو!',
-      url: videos[index].src
-    }).catch(err => console.log(err));
-  } else {
-    alert('خاصية المشاركة غير مدعومة على هذا المتصفح');
-  }
-}
+profilePic.onclick = openProfile;
 </script>
 
 </body>
