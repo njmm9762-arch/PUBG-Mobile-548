@@ -23,14 +23,15 @@ video{width:100%;height:100%;object-fit:contain;display:block;}
 .bottom-info #profileStats{margin-top:5px;}
 .share-options{position:absolute;bottom:60px;right:10px;background:rgba(0,0,0,0.7);border-radius:10px;padding:10px;display:none;flex-direction:row;gap:5px;z-index:1000;}
 .share-options button{background:#ff0050;border:none;color:#fff;padding:5px 10px;border-radius:6px;font-size:14px;cursor:pointer;}
-#profile{display:none;background:#000;min-height:100vh;padding-top:70px;}
+#profile{display:none;background:#000;min-height:100vh;padding-top:70px;overflow-y:auto;}
 .profile-header{text-align:center;position:relative;padding:10px;}
 .profile-header img{width:90px;height:90px;border-radius:50%;}
 .profile-header h2{margin:10px 0 5px;}
 .profile-header .stats{display:flex;justify-content:center;gap:20px;font-size:14px;opacity:0.8;margin-top:5px;}
 .profile-header #closeProfile{position:absolute;top:10px;right:10px;font-size:28px;cursor:pointer;}
-.profile-videos{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:20px;}
-.profile-videos video{width:100%;height:200px;object-fit:cover;cursor:pointer;}
+.profile-videos{display:flex;flex-direction:column;gap:10px;padding:10px;}
+.profile-videos .video-wrapper{position:relative;}
+.profile-videos video{width:100%;height:auto;max-height:250px;object-fit:cover;cursor:pointer;border-radius:8px;}
 .profile-videos .views{position:absolute;bottom:5px;left:5px;color:#fff;font-size:14px;font-weight:bold;}
 .follow{background:#ff0050;padding:6px 14px;border-radius:6px;display:inline-block;margin-top:10px;cursor:pointer;}
 #heart{position:absolute;font-size:80px;color:red;opacity:0;transform:translate(-50%,-50%);pointer-events:none;transition:opacity 0.4s;}
@@ -64,7 +65,7 @@ video{width:100%;height:100%;object-fit:contain;display:block;}
   <div class="bottom-info">
     <div class="username" id="username">★ TIK NEGM ★</div>
     <div class="desc" id="videoDesc">فيديو جميل</div>
-    <div id="profileStats">متابعين: 2B · مشاركات: 150K</div>
+    <div id="profileStats">متابعين: 2B · مشاركات: 12M</div>
     <div class="follow">متابعة</div>
   </div>
 </div>
@@ -76,7 +77,7 @@ video{width:100%;height:100%;object-fit:contain;display:block;}
     <h2 id="profileName">TIK NEGM</h2>
     <div class="stats">
       <span id="profileFollowers">2B متابع</span>
-      <span id="profileShares">150K مشاركة</span>
+      <span id="profileShares">12M مشاركة</span>
     </div>
   </div>
   <div class="profile-videos" id="profileVideos"></div>
@@ -112,7 +113,7 @@ const closeProfileBtn = document.getElementById("closeProfile");
 function formatNumber(num){
   if(num >= 1e9) return (num/1e9).toFixed(1).replace(/\.0$/,'') + "B";
   if(num >= 1e6) return (num/1e6).toFixed(1).replace(/\.0$/,'') + "M";
-  if(num >= 1e3) return (num/1e3).toFixed(1).replace(/\.0$/,'') + "K";
+  if(num >= 1e3) return (num/1e3).toFixed(1).replace(/\.0$/,'K');
   return num;
 }
 
@@ -137,18 +138,19 @@ function loadVideo(){
   profilePic.src = v.profile || "914512268067030319.jpeg";
   profileHeaderPic.src = v.profile || "914512268067030319.jpeg";
   likeCount.innerHTML = "🤍<br><small>" + formatNumber(v.likes) + "</small>";
-  shareCount.innerText = formatNumber(v.shares);
+  shareCount.innerText = formatNumber(12e6); // ثابت 12M لجميع الفيديوهات
   videoDesc.innerText = v.desc;
   profileFollowers.innerText = formatNumber(v.followers || 2e9) + " متابع";
-  profileShares.innerText = formatNumber(v.shares) + " مشاركة";
+  profileShares.innerText = formatNumber(12e6) + " مشاركة";
   liked = false;
   videoPlayer.play().catch(()=>{});
 }
 
-// Scroll سلس
+// Scroll سلس للفيديو الرئيسي
 let startY = 0;
 document.addEventListener("touchstart", e => startY = e.touches[0].clientY);
 document.addEventListener("touchend", e => {
+  if(profileContainer.style.display === "block") return; // لا يتحرك الفيديو الرئيسي عند البروفايل
   let endY = e.changedTouches[0].clientY;
   if(startY - endY > 50) nextVideo();
   if(endY - startY > 50) prevVideo();
@@ -202,6 +204,7 @@ function openProfile(){
   profileVideosContainer.innerHTML = "";
   videos.forEach((v,i)=>{
     const vidWrapper = document.createElement("div");
+    vidWrapper.classList.add("video-wrapper");
     vidWrapper.style.position = "relative";
 
     const vid = document.createElement("video");
